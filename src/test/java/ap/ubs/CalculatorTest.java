@@ -4,7 +4,9 @@ import static org.junit.Assert.*;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -17,9 +19,11 @@ public class CalculatorTest {
 	@Test
 	public void testDefaultDelimiterAndLines() {
 		check("", 0);
+		check(",,", 0);
 		check("1,2", 3);
-		check("1,2,", 3); //TODO: throw exception if it ends with delimiter ?
+		check("1,2,", 3); //throw exception if it ends with delimiter ?
 		check("1\n2,3", 6);
+		
 	}
 	
 	@Test
@@ -30,14 +34,18 @@ public class CalculatorTest {
 		check("- in delimiter", "//a-b\n1a-b2a-b5", 8);
 		check("Number in delimiter", "//a12\n1a122a125", 8);
 		check("Number in delimiter, empty", "//a12\n", 0);
-//		check("'New line' in delimiter", "//\n\n1a122a125", 8);
 		check("Empty delimiter. Only 'new line' is used", "//\n1\n2\n3", 6); 
 	}
 	
 	@Test
 	public void testOrder() {
-		check("//L|LZ\n434906LZ25990238LZ37369006", 63794150);
+		check("//L|LZ\n40LZ20LZ30", 90);
 		check("//a|aa\n1a2aa3aa4", 10);
+	}
+	
+	@Test
+	public void testBigNumbers() {
+		check("1,10,100,1000,1001,10000", 1111);
 	}
 	
 	@Test
@@ -55,7 +63,49 @@ public class CalculatorTest {
 	}
 	
 	@Test
-	public void propertyTest() {
+	public void testIsDigitChar() {
+		String all = "-1234567890";
+		for (int i = 0; i < all.length(); i++) {
+			assertTrue(Calculator.isDigitChar(all.charAt(i)));
+		}
+		String notChars = "!@#$%^&*()_=/abc.,?\\|\n`~";
+		for (int i = 0; i < notChars.length(); i++) {
+			assertFalse(Calculator.isDigitChar(notChars.charAt(i)));
+		}
+	}
+	
+	@Test
+	public void testFindDelimiter() {
+		List<String> delimiters = Arrays.asList("abc", "dd", "a");
+		Optional<String> res1 = Calculator.findDelimiter("a123abc545dd2dd", 4, delimiters);
+		assertTrue(res1.isPresent());
+		assertEquals("abc", res1.get());
+		
+		assertEquals("a", Calculator.findDelimiter("a123abc545dd2dd", 0, delimiters).get());
+		assertEquals("dd", Calculator.findDelimiter("a123abc545dd2dd", 13, delimiters).get());
+	}
+	
+	@Test
+	public void testContainsPiece() {
+		assertTrue(Calculator.containsPiece("abcdef", 1, "b"));
+		assertTrue(Calculator.containsPiece("abcdef", 1, "bc"));
+		assertTrue(Calculator.containsPiece("abcdef", 1, "bcdef"));
+		assertTrue(Calculator.containsPiece("abcdef", 0, "a"));
+		assertTrue(Calculator.containsPiece("abcdef", 0, "abcdef"));
+		assertFalse(Calculator.containsPiece("abcdef", 0, "b"));
+	}
+	
+	@Test
+	public void testParseDelimiters() {
+		assertArrayEquals(new String[] {}, Calculator.parseDelimiters("").toArray(new String[0]));
+		assertArrayEquals(new String[] {"a"}, Calculator.parseDelimiters("a").toArray(new String[0]));
+		assertArrayEquals(new String[] {"a", "b"}, Calculator.parseDelimiters("a|b").toArray(new String[0]));
+		assertArrayEquals(new String[] {"a", "b"}, Calculator.parseDelimiters("a|b|").toArray(new String[0]));
+		assertArrayEquals(new String[] {"aa", "b"}, Calculator.parseDelimiters("|b|aa").toArray(new String[0]));
+	}
+	
+	@Test
+	public void propertyBasedTestingWithHighLoad() {
 		int delimitersNumber = 20;
 		int delimitersMaxLength = 20;
 		int valuesNumber = 100000;
@@ -107,7 +157,7 @@ public class CalculatorTest {
 		
 	}
 
-	public static void check(String title, String input, int expected) {
+	private static void check(String title, String input, int expected) {
 		String message = null;
 		if (title != null && title.length() > 0) {
 			message = title + ": " + input;
@@ -117,36 +167,33 @@ public class CalculatorTest {
 		assertEquals(message, expected, Calculator.add(input));
 	}
 	
-	public static void check(String input, int expected) {
+	private static void check(String input, int expected) {
 		check(null, input, expected);
 	}
 	
-	public static List<String> generateDelimiters(int number, int maxLength) {
-//		System.out.println((char)80);
+	private static List<String> generateDelimiters(int number, int maxLength) {
 		List<String> result = new ArrayList<>();
 		for (int i = 0; i < number; i++) {
 			StringBuilder del = new StringBuilder();
 			int targetLength = 1 + random.nextInt(maxLength-1);
 			while (del.length() < targetLength) {
 //				int chInt = random.nextInt(126-32) + 32;
-//				int chInt = random.nextInt(Character.MAX_VALUE) + 32;
-				int chInt = random.nextInt(300);// + 32;
+//				int chInt = random.nextInt(Character.MAX_VALUE);
+				int chInt = random.nextInt(300);
 				char ch = (char) chInt;
 				if (ch != '\n' && ch != '|' && !Calculator.isDigitChar(ch)) {
-//					System.out.println("Delim: " + chInt + " -> '" + ch + "'");
 					del.append(ch);
 				}
 			}
 			result.add(del.toString());
-//			System.out.println("--");
 		}
 		return result;
 	}
 	
-	public static List<Integer> generateNumbers(int number) {
+	private static List<Integer> generateNumbers(int number) {
 		List<Integer> result = new ArrayList<>();
 		for (int i = 0; i < number; i++) {
-			result.add(Math.abs(random.nextInt(1000000)));
+			result.add(Math.abs(random.nextInt(1001)));
 		}
 		return result;
 	}
