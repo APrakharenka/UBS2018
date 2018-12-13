@@ -37,6 +37,7 @@ public class CalculatorTest {
 	@Test
 	public void testOrder() {
 		check("//L|LZ\n434906LZ25990238LZ37369006", 63794150);
+		check("//a|aa\n1a2aa3aa4", 10);
 	}
 	
 	@Test

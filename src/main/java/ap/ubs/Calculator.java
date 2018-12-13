@@ -24,7 +24,6 @@ public class Calculator {
 		System.out.println("//**|%%\\n1**2%%3 = " + add("//**|%%\n1**2%%3"));
 		
 	}
-	//TODO: test with '-' in separator 
 
 	private static int CHAR_0 = (int)'0';
 	private static int CHAR_9 = (int)'9';
