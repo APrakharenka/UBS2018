@@ -152,7 +152,7 @@ public class CalculatorTest {
 			assertEquals((long)generatedResults.get(i), (long)Calculator.add(input));
 		}
 		long duration = System.currentTimeMillis() - start;
-		System.out.println("Duration of propery base testing: " + duration + " msec");
+		System.out.println("Duration of propery based testing ("+repeats+"x"+valuesNumber+"): " + duration + " msec");
 		
 		
 	}
