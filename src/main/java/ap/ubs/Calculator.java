@@ -21,23 +21,6 @@ public class Calculator {
 	}
 	
 	
-	public static void main(String[] args) {
-		System.out.println("1,2 = " + add("1,2"));
-		System.out.println("1,2, = " + add("1,2,")); //we don't fail on this invalid input
-		System.out.println("1\\n2,3 = " + add("1\n2,3"));
-		System.out.println("//;\\n1;2;3\\n4 = " + add("//;\n1;2;3\n4"));
-		try {
-			System.out.println("//;\\n1;-2;3\\-n4 = " + add("//;\n1;-2;3\n-4"));
-		} catch (Exception ex) {
-			System.out.println(ex.getMessage());
-		}
-		System.out.println("//***\\n1***2***3 = " + add("//***\n1***2***3"));
-		System.out.println("//*|%\\n1*2%3 = " + add("//*|%\n1*2%3"));
-		System.out.println("//**|%%\\n1**2%%3 = " + add("//**|%%\n1**2%%3"));
-		
-	}
-	
-	
 	/**
 	 * Public API function. See details in the assignment.
 	 * @param numbers string of numbers
@@ -51,16 +34,15 @@ public class Calculator {
 	 * For big sequences sum often overflows int variable. Long is used as a result type.
 	 */
 	protected static long addL(String numbers) {
-		
 		int index = 0;
-		List<String> delims = DEFAULT_DELIMITERS;  //TODO: change to full name
-		
+		List<String> delimiters = DEFAULT_DELIMITERS;
 		if (numbers.startsWith("//")) {
 			int lineEnd = numbers.indexOf('\n');
-			delims = parseDelimiters(numbers.substring(2, lineEnd));
+			delimiters = parseDelimiters(numbers.substring(2, lineEnd));
 			index = lineEnd + 1;
 		}
-		delims.add("\n");
+		delimiters.add("\n");
+		
 		StringBuilder curNumber = new StringBuilder();
 		List<Integer> parsedNumbers = new ArrayList<>();
 		while (index < numbers.length()) {
@@ -69,26 +51,31 @@ public class Calculator {
 				curNumber.append(ch);
 				index += 1;
 			} else {
-				if (curNumber.length() > 0) {
-					parsedNumbers.add(Integer.parseInt(curNumber.toString()));
-					curNumber.setLength(0);
-				} 
-				Optional<String> nextDelimiter = findDelimiter(numbers, index, delims);
+				parseNumber(curNumber, parsedNumbers);
+				Optional<String> nextDelimiter = findDelimiter(numbers, index, delimiters);
 				if (nextDelimiter.isPresent()) {
 					index += nextDelimiter.get().length();
 				} else {
-					throw new IllegalArgumentException("Unknown delimiter: " + numbers.substring(index, Math.min(index+10, numbers.length())));
+					throw new IllegalArgumentException("Unknown delimiter: " + 
+						numbers.substring(index, Math.min(index+10, numbers.length())));
 				}
 			}
 		}
-		if (curNumber.length() > 0) {
-			parsedNumbers.add(Integer.parseInt(curNumber.toString()));
-		} else {
-			//We don't check if input is incorrect, e.g. delimiter at the end.
+		if (!parseNumber(curNumber, parsedNumbers)) {
+//			We don't check if input is incorrect, e.g. delimiter at the end.
 //			throw new IllegalArgumentException("Input should not finish with delimiter");
 		}
 		
 		return sumAndCheck(parsedNumbers);
+	}
+	
+	protected static boolean parseNumber(StringBuilder bufffer, List<Integer> parsedNumbers) {
+		if (bufffer.length() > 0) {
+			parsedNumbers.add(Integer.parseInt(bufffer.toString()));
+			bufffer.setLength(0);
+			return true;
+		} 
+		return false;
 	}
 	
 	/**
@@ -155,5 +142,20 @@ public class Calculator {
 			}
 		});
 		return result;
+	}
+	
+	public static void main(String[] args) {
+		System.out.println("1,2 = " + add("1,2"));
+		System.out.println("1,2, = " + add("1,2,")); //we don't fail on this invalid input
+		System.out.println("1\\n2,3 = " + add("1\n2,3"));
+		System.out.println("//;\\n1;2;3\\n4 = " + add("//;\n1;2;3\n4"));
+		try {
+			System.out.println("//;\\n1;-2;3\\-n4 = " + add("//;\n1;-2;3\n-4"));
+		} catch (Exception ex) {
+			System.out.println(ex.getMessage());
+		}
+		System.out.println("//***\\n1***2***3 = " + add("//***\n1***2***3"));
+		System.out.println("//*|%\\n1*2%3 = " + add("//*|%\n1*2%3"));
+		System.out.println("//**|%%\\n1**2%%3 = " + add("//**|%%\n1**2%%3"));
 	}
 }
